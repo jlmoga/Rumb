@@ -923,7 +923,7 @@ async function processJobAnalysis(jobText) {
     const response = await fetch(`${API_URL}?key=${geminiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           responseMimeType: "application/json"
@@ -939,18 +939,18 @@ async function processJobAnalysis(jobText) {
 
     const data = await response.json();
     let resultText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    
+
     console.log("---------------- GEMINI RESULT RAW ----------------");
     console.log(resultText);
     console.log("---------------------------------------------------");
 
     // Netejar possible markdown del JSON (elimina ```json i ```)
     resultText = resultText.replace(/```json/gi, "").replace(/```/g, "").trim();
-    
+
     // Extreure l'objecte JSON (per si hi ha text text abans/després)
     const startIndex = resultText.indexOf('{');
     const endIndex = resultText.lastIndexOf('}');
-    
+
     let analysis = {};
     if (startIndex !== -1 && endIndex !== -1) {
       const cleanJson = resultText.substring(startIndex, endIndex + 1);
@@ -1065,18 +1065,42 @@ function renderAnalysisDashboard(data) {
 
   const keysToRender = ['no_go', 'core_matches', 'secondary_matches', 'ubicacio_modalitat', 'salari', 'sector', 'educacio', 'idiomes'];
 
+  const pesCriteris = {
+    no_go: 25, salari: 20, ubicacio_modalitat: 15, core_matches: 15,
+    idiomes: 10, secondary_matches: 5, sector: 5, educacio: 5
+  };
+
+  const ptsMap = {
+    no_go: { green: 100, amber: 50, red: 0 },
+    salari: { green: 100, amber: 60, red: 0 },
+    ubicacio_modalitat: { green: 100, amber: 40, red: 0 },
+    core_matches: { green: 100, amber: 50, red: 0 },
+    idiomes: { green: 100, amber: 50, red: 0 },
+    secondary_matches: { green: 100, amber: 50, red: 0 },
+    sector: { green: 100, amber: 60, red: 0 },
+    educacio: { green: 100, amber: 50, red: 0 }
+  };
+
   keysToRender.forEach(k => {
     const item = data[k] || {};
-    const status = item.status || 'amber';
+    const status = item.status || 'red';
     const resum = item.resum || 'Sense informació detectada...';
     const user_data = item.user_data || "Sense dades locals...";
     const offer_data = item.offer_data || "L'oferta no detalla res relacionat.";
+
+    const maxPes = pesCriteris[k] || 0;
+    const rawVal = ptsMap[k][status] !== undefined ? ptsMap[k][status] : 0;
+    const earnedPes = (rawVal * maxPes) / 100;
+    const earnedText = Number.isInteger(earnedPes) ? earnedPes : earnedPes.toFixed(1);
+
+    // El disseny en badge per mostrar el pes
+    const weightBadge = `<span style="display:inline-block; background:#eef3f8; color:#0a66c2; padding: 2px 6px; border-radius: 4px; font-size:0.75rem; font-weight:bold; margin-right: 8px;">${earnedText}% / ${maxPes}%</span>`;
 
     html += `
       <details class="analysis-item">
         <summary class="analysis-summary">
           <div class="analysis-info">
-            <p class="analysis-label">${titleMap[k]}</p>
+            <p class="analysis-label" style="display:flex; align-items:center;">${weightBadge}${titleMap[k]}</p>
             <p class="analysis-value" style="font-size: 0.9rem; margin-top: 4px;">${resum}</p>
           </div>
           <div class="status-indicator">
@@ -1128,6 +1152,11 @@ function checkProfileStatus() {
   // Refrescar el resum Markdown a la dreta per assegurar sincronització
   if (hasCv && contentCv) {
     contentCv.innerHTML = marked.parse(renderJsonToMarkdown(profile.cvJson));
+    const btnPrintCv = document.getElementById('btn-imprimir-cv');
+    if (btnPrintCv) btnPrintCv.hidden = false;
+  } else {
+    const btnPrintCv = document.getElementById('btn-imprimir-cv');
+    if (btnPrintCv) btnPrintCv.hidden = true;
   }
 
   // Mostrar la l'àrea d'entrada si no hi ha resultats visibles
@@ -1274,10 +1303,10 @@ async function listModels() {
 }
 
 // ── Exportació PDF / Impressió ──────────────────────────
-window.imprimirInforme = function() {
+window.imprimirInforme = function () {
   const ofertaDocs = document.getElementById('content-oferta');
   const analisiDocs = document.getElementById('content-analisi');
-  
+
   if (!ofertaDocs || !analisiDocs || !analisiDocs.innerHTML.trim()) {
     alert("Primer has de completar una anàlisi d'oferta.");
     return;
@@ -1290,7 +1319,7 @@ window.imprimirInforme = function() {
   analisiHTML = analisiHTML.replace(/<details/g, '<details open');
 
   const printWindow = window.open('', '_blank');
-  
+
   printWindow.document.write(`
     <!DOCTYPE html>
     <html lang="ca">
@@ -1299,6 +1328,7 @@ window.imprimirInforme = function() {
         <title>Informe d'Anàlisi de Compatibilitat</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+          html { font-size: 80%; }
           body { 
             font-family: 'Roboto', Arial, sans-serif; 
             padding: 40px; 
@@ -1370,13 +1400,74 @@ window.imprimirInforme = function() {
       </body>
     </html>
   `);
-  
+
   printWindow.document.close();
   printWindow.focus();
-  
+
   // Petit marge perquè els estils CSS incrustats s'apliquin abans de fer pop el Print
   setTimeout(() => {
     printWindow.print();
     // printWindow.close(); // Millor no auto-tancar, l'usuari pot voler revisar o guardar la pestanya
+  }, 500);
+}
+
+window.imprimirCV = function () {
+  const cvDocs = document.getElementById('content-cv');
+
+  if (!cvDocs || !cvDocs.innerHTML.trim()) {
+    alert("No s'ha carregat cap perfil o CV.");
+    return;
+  }
+
+  const cvHTML = cvDocs.innerHTML;
+
+  const printWindow = window.open('', '_blank');
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="ca">
+      <head>
+        <meta charset="UTF-8">
+        <title>Visualització Curricular - LinkedIn Assistant</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+          html { font-size: 80%; }
+          body { 
+            font-family: 'Roboto', Arial, sans-serif; 
+            padding: 40px; 
+            color: #1a1a1a; 
+            line-height: 1.6;
+            background: #ffffff;
+            max-width: 900px;
+            margin: 0 auto;
+          }
+          h1, h2, h3, h4, h5 { color: #000; margin-bottom: 0.5rem; margin-top: 1.5rem; }
+          h1 { border-bottom: 2px solid #0a66c2; padding-bottom: 10px; margin-bottom: 30px; margin-top: 0; }
+          .cv-section { 
+            padding: 10px;
+          }
+          /* Ocultar fletxes de Markdown si n'hi ha */
+          pre { white-space: pre-wrap; font-family: inherit; }
+          hr { border: 0; height: 1px; background: #ddd; margin: 20px 0; }
+          ul { margin-top: 5px; }
+          li { margin-bottom: 5px; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="cv-section">
+          ${cvHTML}
+        </div>
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+
+  setTimeout(() => {
+    printWindow.print();
   }, 500);
 }

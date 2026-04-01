@@ -148,8 +148,9 @@
 
         <!-- RIGHT: Candidate CV -->
         <div id="col-cv" class="comparison-column card">
-          <div class="column-header">
-            <h3>El teu CV</h3>
+          <div class="column-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">El teu CV</h3>
+            <button id="btn-imprimir-cv" class="secondary-btn compact" onclick="imprimirCV()" hidden>🖨️ Imprimir CV</button>
           </div>
           <div id="content-cv" class="column-content markdown-preview">
             <!-- CV Renderitzat -->
