@@ -70,6 +70,11 @@ const progressFiller = document.getElementById('analysis-progress-filler');
 const btnGuardarPerfil = document.getElementById('btn-guardar-perfil');
 const saveStatusMsg = document.getElementById('save-status-msg');
 
+// Header Status elements
+const headerStatusBadge = document.getElementById('header-status-badge');
+const headerStatusDot = document.getElementById('header-status-dot');
+const headerStatusText = document.getElementById('header-status-text');
+
 // ── State Management ────────────────────────────────
 let originalProfileData = {};
 let stagedCvFile = null;
@@ -269,8 +274,17 @@ function syncUiToJson(currentData) {
     prefs.modalitat_treball.accepta_100_presencial = currentData.modalities ? currentData.modalities.includes('Presencial') : false;
 
     if (!conf.perfil_tecnic) conf.perfil_tecnic = {};
-    conf.perfil_tecnic.tecnologies_vetades = currentData.noGoTags || [];
-    conf.perfil_tecnic.stack_core = currentData.coreTags || [];
+    
+    // Unifiquem tags: el que ja hi ha al JSON + els hashtags nous de la UI (sense repeticions)
+    const combinedCore = [...new Set([...(conf.perfil_tecnic.stack_core || []), ...(currentData.coreTags || [])])];
+    const combinedNoGo = [...new Set([...(conf.perfil_tecnic.tecnologies_vetades || []), ...(currentData.noGoTags || [])])];
+    
+    conf.perfil_tecnic.stack_core = combinedCore.sort();
+    conf.perfil_tecnic.tecnologies_vetades = combinedNoGo.sort();
+    
+    // Actualitzem també la UI per reflectir aquesta fusió
+    renderTags(tagListCore, conf.perfil_tecnic.stack_core, 'coreTags');
+    renderTags(tagListNoGo, conf.perfil_tecnic.tecnologies_vetades, 'noGoTags');
 
     if (!conf.identitat_i_logistica) conf.identitat_i_logistica = {};
     if (!conf.identitat_i_logistica.adreça_base) conf.identitat_i_logistica.adreça_base = {};
@@ -502,11 +516,11 @@ function setupEventListeners() {
 // ── CV Upload Logic ─────────────────────────────────
 async function handleCvUpload(file) {
   if (file.type !== 'application/pdf') {
-    alert('Només s\'admeten fitxers PDF.');
+    updateHeaderStatus("amber", "Error fitxer", "Només s'admeten fitxers PDF.");
     return;
   }
   if (file.size > 2 * 1024 * 1024) {
-    alert('El fitxer és massa gran (màxim 2MB).');
+    updateHeaderStatus("amber", "Error mida", "El fitxer és massa gran (màxim 2MB).");
     return;
   }
 
@@ -579,13 +593,13 @@ function removeTag(tagValue, storageKey, list) {
 async function handleCvAnalysis() {
   const apiKey = inputGeminiKey.value.trim();
   if (!apiKey) {
-    alert('Si us plau, afegeix la teva Gemini API Key primer.');
+    updateHeaderStatus("amber", "API key", "Si us plau, afegeix la teva Gemini API Key primer.");
     return;
   }
 
   const file = await getFileFromDB('cv_pdf');
   if (!file) {
-    alert('No s\'ha trobat cap CV carregat.');
+    updateHeaderStatus("amber", "Falta CV", "No s'ha trobat cap fitxer CV a la base de dades local.");
     return;
   }
 
@@ -605,6 +619,17 @@ async function handleCvAnalysis() {
 
     updateProgress(90, 'Estructurant dades finals...');
     textareaCvJson.value = JSON.stringify(jsonResult, null, 2);
+    
+    // Sincronitzar els tags de la UI a partir del nou JSON generat
+    const conf = jsonResult.configuracio_usuari || jsonResult;
+    if (conf && conf.perfil_tecnic) {
+      if (conf.perfil_tecnic.stack_core) {
+        renderTags(tagListCore, conf.perfil_tecnic.stack_core, 'coreTags');
+      }
+      if (conf.perfil_tecnic.tecnologies_vetades) {
+        renderTags(tagListNoGo, conf.perfil_tecnic.tecnologies_vetades, 'noGoTags');
+      }
+    }
 
     checkFormChanges();
     checkProfileStatus();
@@ -615,7 +640,7 @@ async function handleCvAnalysis() {
   } catch (error) {
     console.error('Error en l\'anàlisi:', error);
     updateProgress(0, 'Error: ' + error.message);
-    alert('S\'ha produït un error en l\'anàlisi. Revisa la consola i la teva API Key.');
+    updateHeaderStatus("amber", "Error JSON", error.message);
   }
 }
 
@@ -710,11 +735,14 @@ async function callGeminiAPI(key, text) {
             "sector": "...",
             "carrec": "...",
             "periode": "...",
-            "stack_utilitzat": ["...", "..."],
+            "stack_utilitzat": ["Llista de tecnologies/eines concretes d'aquesta experiència"],
             "responsabilitats": ["...", "..."],
             "fites_clau": "..."
           }
         ]
+      },
+      "NOTES_LOGICA": {
+        "stack_core_generacio": "El camp 'stack_core' de 'perfil_tecnic' NO ha d'estar buit; ha de ser la UNIO ÚNICA (com un Set) de tots els 'stack_utilitzat' de l'historial laboral."
       }
     }
 
@@ -843,7 +871,7 @@ function showManualPasteUI() {
     if (jobText) {
       processJobAnalysis(jobText);
     } else {
-      alert("Si us plau, enganxa algun text de l'oferta primer.");
+      updateHeaderStatus("amber", "Falta oferta", "Has d'enganxar algun contingut per analitzar.");
     }
   });
 }
@@ -855,13 +883,19 @@ async function processJobAnalysis(jobText) {
 
   const geminiKey = profile.geminiKey;
   if (!geminiKey) {
-    alert("Si us plau, configura la teva API Key a 'El meu perfil'.");
+    updateHeaderStatus("amber", "API key", "Has de configurar la teva API Key de Google Gemini a la secció de Perfil.");
     return;
   }
 
   // Recollim les "veritats" de l'usuari per comparar
-  const userNoGo = config.perfil_tecnic?.tecnologies_vetades || [];
-  const userCore = config.perfil_tecnic?.stack_core || [];
+  // Sumem hashtags de la UI i dades del JSON per als Stacks (sense duplicats)
+  const manualNoGo = profile.noGoTags || [];
+  const manualCore = profile.coreTags || [];
+  const jsonNoGo = config.perfil_tecnic?.tecnologies_vetades || [];
+  const jsonCore = config.perfil_tecnic?.stack_core || [];
+
+  const userNoGo = [...new Set([...manualNoGo, ...jsonNoGo])];
+  const userCore = [...new Set([...manualCore, ...jsonCore])];
   const userSec = config.perfil_tecnic?.stack_secundari || [];
   const userMinSba = config.preferencies_i_filtres_infranquejables?.salari_minim_anual || 0;
   const userDesitjatSba = config.preferencies_i_filtres_infranquejables?.salari_desitjat || 0;
@@ -976,7 +1010,13 @@ async function processJobAnalysis(jobText) {
 
   } catch (err) {
     console.error('Error de Gemini on Job Analysis:', err);
-    alert("Error en l'anàlisi. Revisa la consola o torna-ho a provar.");
+    updateHeaderStatus("amber", "Error anàlisi compatibilitat", err.message);
+    
+    // Netejar la UI del loader i mostrar l'error de forma visual al panell central
+    statusLoader.style.display = 'none';
+    statusMessageMain.innerHTML = `<span style="color:red">🔴 Error en l'anàlisi</span>`;
+    statusMessageSub.textContent = "Detalls: " + err.message;
+    
     showManualPasteUI();
   }
 }
@@ -1144,6 +1184,23 @@ function renderAnalysisDashboard(data) {
 function checkProfileStatus() {
   const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
   const hasCv = !!(profile.cvJson && profile.cvJson.trim());
+  const hasApiKey = !!(profile.geminiKey && profile.geminiKey.trim());
+  
+  // Verificació de dades de configuració informades (camps base)
+  const hasConfig = !!(profile.address && profile.address.trim() && 
+                       profile.sbaMin && 
+                       profile.modalities && profile.modalities.length > 0);
+
+  // Lògica de l'indicador de la capçalera (user rules)
+  if (!hasCv) {
+    updateHeaderStatus("amber", "Revisa JSON");
+  } else if (!hasConfig) {
+    updateHeaderStatus("amber", "Revisa 'El meu CV'");
+  } else if (!hasApiKey) {
+    updateHeaderStatus("amber", "API key");
+  } else {
+    updateHeaderStatus("green", "Actiu");
+  }
 
   btnExaminar.disabled = !hasCv || !isValidUrl(inputOfertaUrl.value.trim());
   btnExaminar.title = hasCv ? "" : "Has de generar el teu CV al Perfil primer";
@@ -1174,6 +1231,22 @@ function checkProfileStatus() {
   } else if (!hasCv) {
     ofertaStatusContainer.hidden = true;
     if (analysisControls) analysisControls.hidden = true;
+  }
+}
+
+function updateHeaderStatus(type, text, tooltipText = "") {
+  if (!headerStatusBadge || !headerStatusDot || !headerStatusText) return;
+  
+  headerStatusText.textContent = text;
+  headerStatusBadge.title = tooltipText; // Afegim el tooltip de HTML de tota la vida
+  
+  if (type === "amber") {
+    headerStatusBadge.classList.add('amber');
+    headerStatusDot.classList.add('amber');
+  } else {
+    headerStatusBadge.classList.remove('amber');
+    headerStatusDot.classList.remove('amber');
+    headerStatusBadge.title = ""; // Netejar tooltip si estem actius
   }
 }
 
@@ -1286,7 +1359,7 @@ function timeToMinutes(timeStr) {
 async function listModels() {
   const key = inputGeminiKey.value.trim();
   if (!key) {
-    console.error('Si us plau, afegeix la teva API Key primer.');
+    updateHeaderStatus("amber", "API key", "API Key no trobada");
     return;
   }
 
@@ -1308,7 +1381,7 @@ window.imprimirInforme = function () {
   const analisiDocs = document.getElementById('content-analisi');
 
   if (!ofertaDocs || !analisiDocs || !analisiDocs.innerHTML.trim()) {
-    alert("Primer has de completar una anàlisi d'oferta.");
+    updateHeaderStatus("amber", "Sense anàlisi", "Primer has de completar l'anàlisi d'una oferta per poder-la imprimir.");
     return;
   }
 
@@ -1415,7 +1488,7 @@ window.imprimirCV = function () {
   const cvDocs = document.getElementById('content-cv');
 
   if (!cvDocs || !cvDocs.innerHTML.trim()) {
-    alert("No s'ha carregat cap perfil o CV.");
+    updateHeaderStatus("amber", "Sense perfil", "No hi ha dades generades per imprimir el CV.");
     return;
   }
 

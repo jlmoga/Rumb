@@ -28,6 +28,11 @@
   --li-blue-light:  #dce6f1;   /* Tint / active bg */
   --li-blue-faint:  #eef3f8;   /* Subtle highlight */
 
+  /* Amber / Status Warning colors */
+  --amber:          #f39c12;
+  --amber-faint:    #fff8e1;
+  --amber-light:    #ffd54f;
+
   /* Backgrounds */
   --bg-base:        #f3f2ef;   /* LinkedIn page background */
   --bg-surface:     #ffffff;   /* Header / card surface */
@@ -173,6 +178,16 @@ body {
   border-radius: 50%;
   background: #29d370;
   animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+.badge-dot.amber {
+  background: var(--amber);
+}
+
+.header-badge.amber {
+  background: var(--amber-faint);
+  border-color: var(--amber-light);
+  color: #b36b00;
 }
 
 @keyframes pulse-dot {
