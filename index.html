@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Assistant</title>
+  <link rel="icon" href="img/logo.jpg" />
+  <meta name="description" content="LinkedIn Assistant – La teva eina intel·ligent per analitzar ofertes i optimitzar el teu perfil professional." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- LIBRARIES -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <img src="img/logo.jpg" alt="LinkedIn Assistant Logo">
+        </div>
+        <div class="logo-text">
+          <h1 class="app-title">LinkedIn Assistant</h1>
+          <span class="app-subtitle">El teu assistent professional</span>
+        </div>
+      </div>
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        <span>Actiu</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar" role="tablist" aria-label="Seccions principals">
+    <button
+      id="tab-examina-oferta"
+      class="tab-btn active"
+      role="tab"
+      aria-selected="true"
+      aria-controls="panel-examina-oferta"
+      data-tab="examina-oferta"
+    >
+      <span class="tab-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+          <path d="M11 8v6M8 11h6"/>
+        </svg>
+      </span>
+      <span class="tab-label">Examina oferta</span>
+      <span class="tab-indicator"></span>
+    </button>
+
+    <button
+      id="tab-el-meu-cv"
+      class="tab-btn"
+      role="tab"
+      aria-selected="false"
+      aria-controls="panel-el-meu-cv"
+      data-tab="el-meu-cv"
+    >
+      <span class="tab-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </span>
+      <span class="tab-label">El meu CV</span>
+      <span class="tab-indicator"></span>
+    </button>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- PANEL: Examina oferta -->
+    <section
+      id="panel-examina-oferta"
+      class="tab-panel active"
+      role="tabpanel"
+      aria-labelledby="tab-examina-oferta"
+    >
+      <div id="oferta-url-input-area">
+        <div class="panel-hero">
+          <div class="panel-hero-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="40" height="40">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+              <path d="M11 8v6M8 11h6"/>
+            </svg>
+          </div>
+          <h2 class="panel-title">Examina una oferta</h2>
+          <p class="panel-description">
+            Enganxa la URL de l'oferta de LinkedIn que t'interessa analitzar.
+          </p>
+        </div>
+
+        <div class="search-container">
+          <div class="input-group">
+            <div class="input-with-icon flex-grow">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+              <input type="url" id="input-oferta-url" placeholder="https://www.linkedin.com/jobs/view/..." />
+            </div>
+            <button id="btn-examinar" class="primary-btn" disabled title="Has de generar el teu CV al Perfil primer">Examinar</button>
+          </div>
+          <p id="oferta-error" class="input-error-msg" hidden>Si us plau, introdueix una URL vàlida.</p>
+          <p id="cv-missing-msg" class="input-hint" style="color: var(--li-blue);">⚠️ Has de generar o afegir el teu CV JSON a la pestanya <strong>"El meu perfil"</strong> per poder analitzar ofertes.</p>
+        </div>
+      </div>
+
+      <!-- ANALYSIS CONTROLS (NEW) -->
+      <div class="analysis-controls" hidden>
+        <button id="btn-nova-analisi" class="outline-btn">
+          <span>←</span> Nova anàlisi
+        </button>
+      </div>
+
+      <!-- STATUS INDICATOR (NEW) -->
+      <div id="oferta-status-container" class="status-indicator-card" hidden>
+        <div id="status-loader" class="status-loader" style="display: none;"></div>
+        <div class="status-text-content">
+          <p id="status-message-main"><strong>Prepara't per l'anàlisi</strong></p>
+          <p id="status-message-sub" class="status-subtext">Introdueix una URL i clica "Examinar" per començar.</p>
+        </div>
+      </div>
+
+      <div id="oferta-analysis-results" class="comparison-grid" hidden>
+        <!-- LEFT: Offer Details -->
+        <div id="col-oferta" class="comparison-column card">
+          <div class="column-header">
+            <h3>Detalls de l'oferta</h3>
+          </div>
+          <div id="content-oferta" class="column-content markdown-preview">
+            <!-- Info de l'oferta (IA) -->
+          </div>
+        </div>
+
+        <!-- RIGHT: Candidate CV -->
+        <div id="col-cv" class="comparison-column card">
+          <div class="column-header">
+            <h3>El teu CV</h3>
+          </div>
+          <div id="content-cv" class="column-content markdown-preview">
+            <!-- CV Renderitzat -->
+          </div>
+        </div>
+
+        <!-- BOTTOM (Spanning full width): AI Analysis Results -->
+        <div id="col-analisi" class="comparison-column card">
+          <div class="column-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Resultats de l'anàlisi</h3>
+            <button id="btn-imprimir-analisi" class="secondary-btn compact" onclick="imprimirInforme()" hidden>🖨️ Imprimir informe</button>
+          </div>
+          <div id="content-analisi" class="column-content">
+            <!-- Semàfors i Dashboard (IA) -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL: El meu CV -->
+    <section
+      id="panel-el-meu-cv"
+      class="tab-panel"
+      role="tabpanel"
+      aria-labelledby="tab-el-meu-cv"
+      hidden
+    >
+      <div class="panel-grid">
+        
+        <!-- SECTION 1: Perfil Professional -->
+        <article class="settings-card">
+          <div class="settings-header">
+            <h3 class="settings-title">1. Perfil professional</h3>
+          </div>
+          <div class="settings-content">
+            <div class="form-group">
+              <label for="input-linkedin-url">Adreça perfil públic de LinkedIn</label>
+              <div class="input-with-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                <input type="url" id="input-linkedin-url" placeholder="https://www.linkedin.com/in/perfil/" />
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label>CV en format PDF (màx. 2MB)</label>
+              <div id="drop-zone-cv" class="drop-zone">
+                <div class="drop-zone-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dz-icon">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <p>Arrossega el teu CV o clica aquí</p>
+                </div>
+                <div id="cv-status" class="file-status" hidden>
+                  <div class="file-info">
+                    <span id="cv-filename" class="filename">meu-cv.pdf</span>
+                    <div class="file-actions">
+                      <button id="btn-download-cv" title="Descarregar CV" class="action-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                      </button>
+                      <button id="btn-remove-cv" title="Eliminar CV" class="action-btn danger">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <input type="file" id="input-cv-pdf" accept="application/pdf" hidden />
+              </div>
+              <div class="info-alert compact" style="margin-top: 8px;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="flex-shrink: 0; margin-top: 2px;">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                </svg>
+                <span style="font-size: 0.8rem; line-height: 1.4;"><strong>Privacitat:</strong> Aquest document no s'emmagatzema a cap servidor extern. Només es desa al teu navegador web i s'envia exclusivament a la IA de Google en el moment de generar l'anàlisi.</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- SECTION 2: Localització -->
+        <article class="settings-card">
+          <div class="settings-header">
+            <h3 class="settings-title">2. Localització</h3>
+          </div>
+          <div class="settings-content grid-2-cols">
+            <div class="form-group col-span-2">
+              <label for="input-address">Adreça de residència</label>
+              <div class="input-with-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                <input type="text" id="input-address" placeholder="Carrer, número, ciutat..." />
+              </div>
+            </div>
+            <div class="form-group col-span-2">
+              <label for="input-radius">Distància màxima de desplaçament (km)</label>
+              <input type="number" id="input-radius" min="0" value="50" />
+            </div>
+            <div class="form-group col-span-2">
+              <label for="input-commute-time">Temps màxim de desplaçament</label>
+              <input type="time" id="input-commute-time" value="00:45" />
+            </div>
+          </div>
+        </article>
+
+        <!-- SECTION 3: Preferències de feina -->
+        <article class="settings-card col-span-2">
+          <div class="settings-header">
+            <h3 class="settings-title">3. Preferències de feina</h3>
+          </div>
+          <div class="settings-content">
+            <div class="grid-2-cols">
+              <div class="form-group">
+                <label>Modalitat de treball</label>
+                <div id="modalitat-selector" class="chip-selector">
+                  <button type="button" class="chip" data-value="Remot">Remot</button>
+                  <button type="button" class="chip" data-value="Híbrid">Híbrid</button>
+                  <button type="button" class="chip" data-value="Presencial">Presencial</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="input-sba-min">SBA mínim (€/any)</label>
+                <div class="input-with-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                    <path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/>
+                  </svg>
+                  <input type="number" id="input-sba-min" placeholder="Ex: 45000" min="0" step="500" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="input-max-days">Dies presencials màxims / setmana</label>
+                <input type="number" id="input-max-days" min="0" max="5" value="2" />
+              </div>
+
+              <div class="form-group">
+                <label for="input-sba-desitjat">SBA desitjat (€/any)</label>
+                <div class="input-with-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                    <path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/>
+                  </svg>
+                  <input type="number" id="input-sba-desitjat" placeholder="Ex: 55000" min="0" step="500" />
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-2-cols mt-4">
+              <div class="form-group tag-input-container">
+                <label for="input-no-go">Hashtags No-Go (Vermell)</label>
+                <div class="tag-input-wrapper no-go">
+                  <div id="tag-list-no-go" class="tag-list"></div>
+                  <input type="text" id="input-no-go" placeholder="Afegir flag vermell..." />
+                </div>
+              </div>
+              
+              <div class="form-group tag-input-container">
+                <label for="input-core">Hashtag Core (Blau)</label>
+                <div class="tag-input-wrapper core">
+                  <div id="tag-list-core" class="tag-list"></div>
+                  <input type="text" id="input-core" placeholder="Afegir preferència positiva..." />
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- BOTÓ GUARDAR -->
+        <article class="settings-card col-span-2" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; background-color: var(--li-blue-faint); border-color: var(--li-blue-light);">
+          <button id="btn-guardar-perfil" class="primary-btn wide" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="margin-right: 8px; vertical-align: middle;">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+            </svg>
+            <span style="vertical-align: middle;">Guardar totes les dades del Perfil / CV</span>
+          </button>
+          <p id="save-status-msg" class="save-status-msg mt-3" hidden>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="margin-right: 4px; color: #057642;">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Canvis guardats correctament!
+          </p>
+        </article>
+
+        <!-- SECTION 4: Anàlisi del teu CV -->
+        <article class="settings-card col-span-2">
+          <div class="settings-header space-between">
+            <h3 class="settings-title">4. Anàlisi del teu CV</h3>
+            <button id="btn-analitzar-cv" class="secondary-btn compact" disabled>Analitza / Refresca informació</button>
+          </div>
+          <div class="settings-content">
+            <!-- Progress Bar -->
+            <div id="analysis-progress-container" class="progress-container" hidden>
+              <div class="progress-info">
+                <span id="analysis-status-text">Preparant l'anàlisi...</span>
+                <span id="analysis-percentage">0%</span>
+              </div>
+              <div class="progress-bar">
+                <div id="analysis-progress-filler" class="progress-filler"></div>
+              </div>
+            </div>
+
+            <div class="info-alert mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" style="flex-shrink: 0; margin-top: 2px;">
+                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+              </svg>
+              <span><strong>Avís:</strong> Si has modificat dades d'aquest formulari o has pujat un nou PDF, recorda prémer el botó «Guardar» que hi ha al final, abans d'iniciar l'anàlisi perquè la IA treballi amb les dades més recents.</span>
+            </div>
+
+            <div class="grid-2-cols" style="align-items: start; margin-bottom: 16px;">
+              <div class="form-group">
+                <label for="input-gemini-key">Gemini API Key (Google)</label>
+                <div class="input-with-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="input-icon">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  <input type="password" id="input-gemini-key" placeholder="Afegeix la clau de Console" />
+                </div>
+              </div>
+              
+              <div class="info-alert compact">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="flex-shrink: 0; margin-top: 2px;">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                </svg>
+                <span style="font-size: 0.8rem; line-height: 1.4;">Per habilitar l'extracció experta de dades necessites una API Key gratuïta de Google Cloud Console. Aquesta aplicació crida al model <strong>gemini-2.5-flash</strong> des del teu dispositiu.</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="textarea-cv-json">Dades del CV (Format JSON)</label>
+              <textarea id="textarea-cv-json" class="code-textarea" placeholder='{ "nom": "...", "experiencia": [...] }'></textarea>
+              <div class="textarea-footer">
+                <p class="input-hint">Aquesta àrea conté la informació estructurada del teu CV per a l'anàlisi d'ofertes.</p>
+                <button id="btn-copy-json" class="secondary-btn compact">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right: 6px;">
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                  </svg>
+                  <span>Copiar JSON</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </article>
+
+      </div>
+
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
