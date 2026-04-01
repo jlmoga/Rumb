@@ -618,18 +618,27 @@ async function handleCvAnalysis() {
     const jsonResult = await callGeminiAPI(apiKey, rawText);
 
     updateProgress(90, 'Estructurant dades finals...');
+    
+    // Obtenim les veritats manuals de la UI abans de desar el nou JSON
+    const currentUi = collectFormData();
+    
+    // L'objecte de l'IA pot portar configuracio_usuari fora o dins (depenent de la resposta exacte)
+    let conf = jsonResult.configuracio_usuari || jsonResult;
+    if (!conf.perfil_tecnic) conf.perfil_tecnic = {};
+    
+    // APLICAR REGLES:
+    // 1. No-Go: Sempre és manual. El que hi hagi a la UI passa al JSON.
+    conf.perfil_tecnic.tecnologies_vetades = currentUi.noGoTags || [];
+    
+    // 2. Core: Fusió de manual (UI) + AI (el que ha extregut de les experiències), sense duplicats.
+    const aiCore = conf.perfil_tecnic.stack_core || [];
+    conf.perfil_tecnic.stack_core = [...new Set([...aiCore, ...currentUi.coreTags])].sort();
+
     textareaCvJson.value = JSON.stringify(jsonResult, null, 2);
     
-    // Sincronitzar els tags de la UI a partir del nou JSON generat
-    const conf = jsonResult.configuracio_usuari || jsonResult;
-    if (conf && conf.perfil_tecnic) {
-      if (conf.perfil_tecnic.stack_core) {
-        renderTags(tagListCore, conf.perfil_tecnic.stack_core, 'coreTags');
-      }
-      if (conf.perfil_tecnic.tecnologies_vetades) {
-        renderTags(tagListNoGo, conf.perfil_tecnic.tecnologies_vetades, 'noGoTags');
-      }
-    }
+    // Sincronitzar els tags de la UI per assegurar que es veu la llista final unificada
+    renderTags(tagListCore, conf.perfil_tecnic.stack_core, 'coreTags');
+    renderTags(tagListNoGo, conf.perfil_tecnic.tecnologies_vetades, 'noGoTags');
 
     checkFormChanges();
     checkProfileStatus();
