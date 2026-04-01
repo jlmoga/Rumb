@@ -1028,10 +1028,14 @@ function renderAnalysisDashboard(data) {
           <div class="marker-triangle"></div>
         </div>
       </div>
-      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666; margin-top: 6px;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666; margin-top: 8px; margin-bottom: 16px;">
         <span>Descartable</span>
         <span>Potencial</span>
         <span>Ideal</span>
+      </div>
+      <div style="font-size: 0.8rem; color: #555; background: #eef3f8; padding: 8px 12px; border-radius: 6px; display: flex; align-items: flex-start; gap: 8px; border-left: 3px solid #0a66c2;">
+        <span style="font-weight: bold; font-size: 0.9rem;">ℹ️</span>
+        <span>Dues execucions consecutives de l'anàlisi de la mateixa oferta poden donar valors de compatibilitat lleugerament diferents per la naturalesa de la IA.</span>
       </div>
     </div>
     <div class="analysis-dashboard">
