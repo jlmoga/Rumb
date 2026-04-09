@@ -31,7 +31,7 @@
         </div>
         <div class="logo-text">
           <h1 class="app-title">Rumb</h1>
-          <span class="app-subtitle">El teu assistent professional (v0.7)</span>
+          <span class="app-subtitle">El teu assistent professional (v0.8)</span>
         </div>
       </div>
       <div class="header-badge" id="header-status-badge">
@@ -417,22 +417,29 @@
               </button>
             </div>
 
-            <div id="ocupacions-loader" style="margin-top: 32px; display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <div id="ocupacions-loader"
+              style="margin-top: 32px; display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto;">
               <!-- Progress Bar Elegant -->
-              <div id="ventall-progress-container" class="progress-container" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border);">
+              <div id="ventall-progress-container" class="progress-container"
+                style="width: 100%; background: var(--bg-body); border: 1px solid var(--border);">
                 <div class="progress-info" style="display: flex; align-items: center; width: 100%; margin-bottom: 8px;">
-                  <span id="ventall-status-text" style="flex: 1; font-size: 0.85rem; color: var(--text-secondary); text-align: left;">Connectant amb l'eina intel·ligent...</span>
-                  <span id="ventall-percentage" style="font-weight: bold; color: var(--li-blue); font-size: 0.9rem; margin-right: 12px;">0%</span>
+                  <span id="ventall-status-text"
+                    style="flex: 1; font-size: 0.85rem; color: var(--text-secondary); text-align: left;">Connectant amb
+                    l'eina intel·ligent...</span>
+                  <span id="ventall-percentage"
+                    style="font-weight: bold; color: var(--li-blue); font-size: 0.9rem; margin-right: 12px;">0%</span>
                   <button id="btn-stop-ocupacions" class="text-btn-danger"
                     style="display: flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.75rem; border: 1px solid #fecaca; background: #fff1f2; cursor: pointer;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                      fill="currentColor" stroke="none">
                       <rect x="6" y="6" width="12" height="12"></rect>
                     </svg>
                     Aturar
                   </button>
                 </div>
                 <div class="progress-bar" style="background: var(--border);">
-                  <div id="ventall-progress-filler" class="progress-filler" style="width: 0%; transition: width 0.4s ease;"></div>
+                  <div id="ventall-progress-filler" class="progress-filler"
+                    style="width: 0%; transition: width 0.4s ease;"></div>
                 </div>
               </div>
             </div>
@@ -567,6 +574,27 @@
                   s'emmagatzema a cap servidor extern. Només es desa al teu navegador web i s'envia exclusivament a la
                   IA de Google en el moment de generar l'anàlisi.</span>
               </div>
+
+              <!-- Dades demogràfiques i experiència (Salary context) -->
+              <div class="grid-2-cols mt-4">
+                <div class="form-group">
+                  <label for="input-experience">Anys d'experiència total</label>
+                  <input type="number" id="input-experience" placeholder="Ex: 12" min="0" max="60" />
+                </div>
+                <div class="form-group">
+                  <label for="input-birthdate">Data de naixement</label>
+                  <input type="date" id="input-birthdate" />
+                </div>
+              </div>
+              <div class="form-group mt-4">
+                <label for="select-education-level">Nivell d'estudis (ISCED)</label>
+                <select id="select-education-level">
+                  <option value="">Selecciona nivell...</option>
+                  <option value="Baix">Nivell Baix (ISCED 0-2: ESO o inferior)</option>
+                  <option value="Mitjà">Nivell Mitjà (ISCED 3-4: Batxillerat, FP Grau Mitjà/Superior)</option>
+                  <option value="Alt">Nivell Alt (ISCED 5-8: Grau, Màster, Doctorat)</option>
+                </select>
+              </div>
             </div>
           </div>
         </article>
@@ -645,6 +673,28 @@
                   <input type="number" id="input-sba-desitjat" placeholder="Ex: 55000" min="0" step="500" />
                 </div>
               </div>
+            </div>
+
+            <div class="form-group mt-4">
+              <label for="select-nace-sector">Sector econòmic d'interès (NACE)</label>
+              <select id="select-nace-sector">
+                <option value="">Selecciona sector...</option>
+                <option value="C">C. Indústria manufacturera</option>
+                <option value="F">F. Construcció</option>
+                <option value="G">G. Comerç; reparació de vehicles</option>
+                <option value="H">H. Transport i emmagatzematge</option>
+                <option value="I">I. Hostaleria</option>
+                <option value="J">J. Informació i comunicacions (Tecnologia)</option>
+                <option value="K">K. Activitats financeres i d'assegurances</option>
+                <option value="L">L. Activitats immobiliàries</option>
+                <option value="M">M. Activitats professionals, científiques i tècniques</option>
+                <option value="N">N. Activitats administratives i serveis auxiliars</option>
+                <option value="O">O. Administració Pública; Seguretat Social</option>
+                <option value="P">P. Educació</option>
+                <option value="Q">Q. Activitats sanitàries i de serveis socials</option>
+                <option value="R">R. Activitats artístiques i de lleure</option>
+                <option value="S">S. Altres serveis</option>
+              </select>
             </div>
 
             <div class="grid-2-cols mt-4">
@@ -866,8 +916,8 @@
       </div>
 
 
-  <!-- APP LOGIC -->
-  <script type="module" src="js/main.js"></script>
+      <!-- APP LOGIC -->
+      <script type="module" src="js/main.js"></script>
 </body>
 
 </html>

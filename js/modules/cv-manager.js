@@ -23,6 +23,9 @@ export function loadProfileData() {
   if (data.commuteTime) dom.inputCommuteTime.value = data.commuteTime;
   if (data.cvJson) dom.textareaCvJson.value = data.cvJson;
   if (data.geminiKey) dom.inputGeminiKey.value = data.geminiKey;
+  if (data.experience) dom.inputExperience.value = data.experience;
+  if (data.birthDate) dom.inputBirthDate.value = data.birthDate;
+  if (data.educationLevel) dom.selectEducationLevel.value = data.educationLevel;
 
   dom.modalityChips.forEach(chip => {
     chip.classList.remove('active');
@@ -78,16 +81,26 @@ export function collectFormData() {
     geminiKey: dom.inputGeminiKey.value.trim(),
     modalities: modalities.sort(),
     noGoTags: Array.from(dom.tagListNoGo.querySelectorAll('.tag span:first-child')).map(s => s.textContent.replace('#', '')).sort(),
-    coreTags: Array.from(dom.tagListCore.querySelectorAll('.tag span:first-child')).map(s => s.textContent.replace('#', '')).sort()
+    coreTags: Array.from(dom.tagListCore.querySelectorAll('.tag span:first-child')).map(s => s.textContent.replace('#', '')).sort(),
+    experience: dom.inputExperience.value,
+    birthDate: dom.inputBirthDate.value,
+    educationLevel: dom.selectEducationLevel.value,
+    naceSector: dom.selectNaceSector.value
   };
 }
 
 export function syncUiToJson(currentData) {
-  if (!currentData.cvJson || !currentData.cvJson.trim()) return;
+  let parsed;
   try {
-    let parsed = JSON.parse(currentData.cvJson);
+    parsed = (currentData.cvJson && currentData.cvJson.trim()) 
+      ? JSON.parse(currentData.cvJson) 
+      : { configuracio_usuari: {} };
+    
     let conf = parsed.configuracio_usuari || parsed;
-    if (!conf) return;
+    if (!conf) {
+      parsed.configuracio_usuari = {};
+      conf = parsed.configuracio_usuari;
+    }
 
     if (!conf.preferencies_i_filtres_infranquejables) conf.preferencies_i_filtres_infranquejables = {};
     let prefs = conf.preferencies_i_filtres_infranquejables;
@@ -108,11 +121,15 @@ export function syncUiToJson(currentData) {
     if (!conf.perfil_tecnic) conf.perfil_tecnic = {};
     conf.perfil_tecnic.stack_core = currentData.coreTags || [];
     conf.perfil_tecnic.tecnologies_vetades = currentData.noGoTags || [];
-    
+    conf.perfil_tecnic.anys_experiencia = currentData.experience ? parseInt(currentData.experience, 10) : "";
+    conf.perfil_tecnic.nivell_estudis = currentData.educationLevel;
+    conf.perfil_tecnic.sector_economic = currentData.naceSector;
+
     uiUtils.renderTags(dom.tagListCore, conf.perfil_tecnic.stack_core, 'coreTags');
     uiUtils.renderTags(dom.tagListNoGo, conf.perfil_tecnic.tecnologies_vetades, 'noGoTags');
 
     if (!conf.identitat_i_logistica) conf.identitat_i_logistica = {};
+    conf.identitat_i_logistica.data_naixement = currentData.birthDate;
     if (!conf.identitat_i_logistica.adreça_base) conf.identitat_i_logistica.adreça_base = {};
     if (currentData.address) conf.identitat_i_logistica.adreça_base.poblacio = currentData.address;
     if (currentData.dispoDies) conf.identitat_i_logistica.disponibilitat_incorporacio_dies = parseInt(currentData.dispoDies, 10);
@@ -180,6 +197,12 @@ export function syncJsonToReadonlyFields() {
     } else {
       renderReadonlySkills([]);
     }
+
+    // New market fields sync
+    if (dom.inputExperience) dom.inputExperience.value = tech.anys_experiencia || '';
+    if (dom.inputBirthDate) dom.inputBirthDate.value = (conf.identitat_i_logistica && conf.identitat_i_logistica.data_naixement) || '';
+    if (dom.selectEducationLevel) dom.selectEducationLevel.value = tech.nivell_estudis || '';
+    if (dom.selectNaceSector) dom.selectNaceSector.value = tech.sector_economic || '';
   } catch(e) {
     console.warn("Error en sincronitzar camps readonly:", e);
   }

@@ -78,6 +78,22 @@ function setupEventListeners() {
     cvManager.checkProfileStatus();
   });
 
+  dom.inputExperience.addEventListener('input', (e) => {
+    cvManager.saveProfileField('experience', e.target.value);
+  });
+
+  dom.inputBirthDate.addEventListener('input', (e) => {
+    cvManager.saveProfileField('birthDate', e.target.value);
+  });
+
+  dom.selectEducationLevel.addEventListener('change', (e) => {
+    cvManager.saveProfileField('educationLevel', e.target.value);
+  });
+
+  dom.selectNaceSector.addEventListener('change', (e) => {
+    cvManager.saveProfileField('naceSector', e.target.value);
+  });
+
   // CV PDF Handling
   dom.dropZoneCv.addEventListener('click', () => dom.inputCvPdf.click());
 

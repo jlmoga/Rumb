@@ -259,6 +259,7 @@ export async function callGeminiAPI(key, text, onRetry = null, signal = null) {
       "configuracio_usuari": {
         "identitat_i_logistica": {
           "nom_complet": "...",
+          "data_naixement": (string: "${profile.birthDate || "YYYY-MM-DD"}"),
           "rol_actual": "...",
           "adreça_base": {
             "carrer_i_numero": "Extrau el carrer de l'adreça facilitada",
@@ -283,6 +284,9 @@ export async function callGeminiAPI(key, text, onRetry = null, signal = null) {
         },
         "perfil_tecnic": {
           "resum_professional": "Resumeix el perfil en 2-3 frases potents",
+          "anys_experiencia": (int: ${profile.experience || "Extreure total del CV"}),
+          "nivell_estudis": (string: "${profile.educationLevel || "ISCED 0-8"}"),
+          "sector_economic": (string: "${profile.naceSector || "Codi NACE"}"),
           "stack_core": ["Llista de 5-8 tecnologies/skills troncals"],
           "stack_secundari": ["Llista d'altres tecnologies/skills"],
           "tecnologies_vetades": ["Si al CV indica que no vol treballar amb X"],

@@ -110,3 +110,7 @@ export const btnStopOcupacions = document.getElementById('btn-stop-ocupacions');
 export const ventallProgressFiller = document.getElementById('ventall-progress-filler');
 export const ventallPercentage = document.getElementById('ventall-percentage');
 export const ventallStatusText = document.getElementById('ventall-status-text');
+export const inputExperience = document.getElementById('input-experience');
+export const inputBirthDate = document.getElementById('input-birthdate');
+export const selectEducationLevel = document.getElementById('select-education-level');
+export const selectNaceSector = document.getElementById('select-nace-sector');
