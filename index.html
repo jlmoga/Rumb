@@ -417,20 +417,24 @@
               </button>
             </div>
 
-            <div id="ocupacions-loader"
-              style="margin-top: 32px; display: none; flex-direction: column; align-items: center;">
-              <div class="status-loader" style="display: block; margin-bottom: 16px;"></div>
-              <p id="ocupacions-loader-text" style="color: var(--text-secondary);">Connectant amb l'eina intel·ligent i
-                perfilant l'historial...</p>
-              <button id="btn-stop-ocupacions" class="secondary-btn compact"
-                style="margin-top: 16px; border-color: #ea4335; color: #ea4335;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  style="margin-right: 6px;">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                </svg>
-                Aturar
-              </button>
+            <div id="ocupacions-loader" style="margin-top: 32px; display: none; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin-left: auto; margin-right: auto;">
+              <!-- Progress Bar Elegant -->
+              <div id="ventall-progress-container" class="progress-container" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border);">
+                <div class="progress-info" style="display: flex; align-items: center; width: 100%; margin-bottom: 8px;">
+                  <span id="ventall-status-text" style="flex: 1; font-size: 0.85rem; color: var(--text-secondary); text-align: left;">Connectant amb l'eina intel·ligent...</span>
+                  <span id="ventall-percentage" style="font-weight: bold; color: var(--li-blue); font-size: 0.9rem; margin-right: 12px;">0%</span>
+                  <button id="btn-stop-ocupacions" class="text-btn-danger"
+                    style="display: flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.75rem; border: 1px solid #fecaca; background: #fff1f2; cursor: pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                      <rect x="6" y="6" width="12" height="12"></rect>
+                    </svg>
+                    Aturar
+                  </button>
+                </div>
+                <div class="progress-bar" style="background: var(--border);">
+                  <div id="ventall-progress-filler" class="progress-filler" style="width: 0%; transition: width 0.4s ease;"></div>
+                </div>
+              </div>
             </div>
           </article>
 

@@ -361,8 +361,12 @@ const ventallResults = document.getElementById('ventall-results');
 const llistaOcupacions = document.getElementById('llista-ocupacions');
 const diccionariOcupacionsText = document.getElementById('diccionari-ocupacions-text');
 const diccionariSkillsText = document.getElementById('diccionari-skills-text');
-const ocupacionsLoaderText = document.getElementById('ocupacions-loader-text');
 const btnStopOcupacions = document.getElementById('btn-stop-ocupacions');
+
+// Ventall Progress Bar Elements
+const ventallProgressFiller = document.getElementById('ventall-progress-filler');
+const ventallPercentage = document.getElementById('ventall-percentage');
+const ventallStatusText = document.getElementById('ventall-status-text');
 
 // ── State Management ────────────────────────────────
 let originalProfileData = {};
@@ -1318,6 +1322,13 @@ function updateProgress(percent, status) {
   progressStatus.textContent = status;
 }
 
+function updateVentallProgress(percent, status) {
+  if (ventallProgressFiller) ventallProgressFiller.style.width = percent + '%';
+  if (ventallPercentage) ventallPercentage.textContent = percent + '%';
+  if (ventallStatusText) ventallStatusText.textContent = status;
+  updateAiStatus(status); // També mantenim el sincronisme amb el badge global d'IA
+}
+
 // ── Ventall Professional Logic ──────────────────────
 async function handleGenerarOcupacions() {
   const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
@@ -1334,7 +1345,7 @@ async function handleGenerarOcupacions() {
   try {
     btnGenerarOcupacions.disabled = true;
     ocupacionsLoader.style.display = 'flex';
-    if (ocupacionsLoaderText) ocupacionsLoaderText.innerHTML = "Connectant amb l'eina intel·ligent i perfilant l'historial...";
+    updateVentallProgress(0, "Connectant amb l'eina intel·ligent i perfilant l'historial...");
 
     // --- PREPARACIÓ DE DADES PER ALS PROMPTS ---
     let cvData = {};
@@ -1374,20 +1385,20 @@ async function handleGenerarOcupacions() {
 
     const [dataOcc, userSkills] = await Promise.all([
       (async () => {
-        if (ocupacionsLoaderText) ocupacionsLoaderText.innerHTML = "Consultant la IA sobre les ocupacions més adients per a tu...";
+        updateVentallProgress(5, "Consultant la IA sobre les ocupacions més adients per a tu...");
         return callGemini(promptOcupacions, (retry, total) => {
-          updateAiStatus(`Explorant ventall... (reintent ${retry}/${total})`);
+          updateVentallProgress(5 + (retry * 2), `Explorant ventall... (reintent ${retry}/${total})`);
         }, signal, true);
       })(),
       (async () => {
-        // Aquest sol trigar més, així que posem un missatge que expliqui la complexitat
-        if (ocupacionsLoaderText) ocupacionsLoaderText.innerHTML = "Construïnt diccionari de termes ESCO del teu CV...";
-        return callGemini(promptSkills, (retry, total) => {
-          updateAiStatus(`Mapejant habilitats... (reintent ${retry}/${total})`);
-        }, signal, true);
+        // No actualitzem el text aquí perquè s'encavalcaria amb el de dalt, 
+        // deixem que la barra es mogui quan ambdues acabin o via callGemini
+        return callGemini(promptSkills, null, signal, true);
       })()
     ]);
     
+    updateVentallProgress(45, "✓ IA: Perfil i ocupacions identificades. Iniciant processament ESCO...");
+
     const ocupacionsArray = Array.isArray(dataOcc) ? dataOcc : (dataOcc.ocupacions || []);
     const userSkillsDictionary = (Array.isArray(userSkills) ? userSkills : (userSkills.skills || userSkills.userSkills || [])).map(s => s.toLowerCase());
 
@@ -1400,8 +1411,6 @@ async function handleGenerarOcupacions() {
     }
     // --- FI RESTAURACIÓ DICCIIONARIS ---
 
-    if (ocupacionsLoaderText) ocupacionsLoaderText.innerHTML = "✓ IA: Perfil i ocupacions identificades.<br>Creuant dades amb la base de dades europea (ESCO)...";
-
     // 3. Renderitzat incremental
     ventallResults.hidden = false;
     llistaOcupacions.innerHTML = ''; // Netegem per carregar una a una
@@ -1411,6 +1420,7 @@ async function handleGenerarOcupacions() {
     
     let escoCallsCompleted = 0;
     let resultsForGlobal = [];
+    const totalOcc = ocupacionsArray.length;
 
     // Pintem cada ocupació a mesura que arriba
     const fetchAndRender = async (ocDesc) => {
@@ -1423,9 +1433,10 @@ async function handleGenerarOcupacions() {
             llistaOcupacions.appendChild(card);
             
             escoCallsCompleted++;
-            if (ocupacionsLoaderText) {
-                ocupacionsLoaderText.innerHTML = `✓ IA: Perfil identificat.<br>Processant ocupacions ESCO (${escoCallsCompleted} de ${ocupacionsArray.length})...`;
-            }
+            
+            // Percentatge: anem del 45% al 98% durant el processament ESCO
+            const currentPct = Math.round(45 + ((escoCallsCompleted / totalOcc) * 50));
+            updateVentallProgress(currentPct, `Processant ocupacions ESCO (${escoCallsCompleted} de ${totalOcc})...`);
             
             // Actualitzem el resum global amb les dades que anem tenint
             updateGlobalSummary(globalContainer, resultsForGlobal, userSkillsDictionary);
@@ -1439,7 +1450,7 @@ async function handleGenerarOcupacions() {
     // Lancem totes les crides en paral·lel però es renderitzaran individualment
     await Promise.all(ocupacionsArray.map(ocDesc => fetchAndRender(ocDesc)));
 
-    if (ocupacionsLoaderText) ocupacionsLoaderText.innerHTML = "✓ Procés completat correctament.";
+    updateVentallProgress(100, "✓ Procés completat correctament.");
     ventallResults.hidden = false;
 
   } catch (err) {
