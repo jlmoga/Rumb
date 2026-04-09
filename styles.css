@@ -1,5 +1,5 @@
 /* ==========================================================
-   RUMB - LinkedIn Assistant – Design System (LinkedIn style)
+   RUMB - El teu assistent professional – Design System (LinkedIn style)
    =================================================== */
 
 /* roboto-regular - latin */
@@ -963,7 +963,8 @@ input:focus {
 }
 
 /* ── Markdown Preview Styling ─────────────────── */
-.markdown-preview h2, .ia-response-content h2 {
+.markdown-preview h2,
+.ia-response-content h2 {
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--li-blue);
@@ -972,7 +973,8 @@ input:focus {
   padding-bottom: 4px;
 }
 
-.markdown-preview h3, .ia-response-content h3 {
+.markdown-preview h3,
+.ia-response-content h3 {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-main);
@@ -980,22 +982,27 @@ input:focus {
   margin-bottom: 8px;
 }
 
-.markdown-preview p, .ia-response-content p {
+.markdown-preview p,
+.ia-response-content p {
   line-height: 1.6;
   margin-bottom: 12px;
 }
 
-.markdown-preview ul, .ia-response-content ul, .ia-response-content ol {
+.markdown-preview ul,
+.ia-response-content ul,
+.ia-response-content ol {
   margin-bottom: 16px;
   padding-left: 24px;
 }
 
-.markdown-preview li, .ia-response-content li {
+.markdown-preview li,
+.ia-response-content li {
   margin-bottom: 6px;
   line-height: 1.5;
 }
 
-.markdown-preview strong, .ia-response-content strong {
+.markdown-preview strong,
+.ia-response-content strong {
   color: var(--text-main);
   font-weight: 600;
 }
