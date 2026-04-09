@@ -214,7 +214,6 @@ export function renderReadonlySkills(skills) {
 }
 
 export async function saveAllProfileData() {
-  syncJsonToTagsUI();
   const currentData = collectFormData();
   syncUiToJson(currentData);
 

@@ -46,9 +46,9 @@ export function renderTags(list, tags, storageKey) {
   if (!list) return;
   list.innerHTML = '';
   (tags || []).forEach(tag => {
-    const chip = document.createElement('span');
-    chip.className = 'tag-chip';
-    chip.innerHTML = `${tag} <span class="tag-remove" data-tag="${tag}">×</span>`;
+    const chip = document.createElement('div');
+    chip.className = 'tag';
+    chip.innerHTML = `<span>#${tag}</span><span class="tag-remove" data-tag="${tag}">×</span>`;
     list.appendChild(chip);
   });
 }
